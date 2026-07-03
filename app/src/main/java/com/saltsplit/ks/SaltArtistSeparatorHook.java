@@ -21,6 +21,7 @@ import de.robv.android.xposed.callbacks.XC_LoadPackage;
 public final class SaltArtistSeparatorHook implements IXposedHookLoadPackage {
     private static final String TARGET_PACKAGE = "com.salt.music";
     private static final String[] ARTIST_SPLIT_CLASSES = {
+            "androidx.obf.mu3",
             "androidx.obf.l64",
             "androidx.obf.x64",
             "androidx.obf.y64",
@@ -257,20 +258,20 @@ public final class SaltArtistSeparatorHook implements IXposedHookLoadPackage {
         if (simpleName.length() < 3 || simpleName.length() > 5) {
             return false;
         }
-        int digitStart = simpleName.length() - 2;
-        for (int i = digitStart; i < simpleName.length(); i++) {
+        // Salt Player obfuscation has used letter+digits names with different
+        // digit widths, e.g. l64 and mu3, for Kotlin string helpers.
+        boolean hasDigit = false;
+        for (int i = 0; i < simpleName.length(); i++) {
             char c = simpleName.charAt(i);
-            if (c < '0' || c > '9') {
-                return false;
+            if (c >= '0' && c <= '9') {
+                hasDigit = true;
+                continue;
             }
-        }
-        for (int i = 0; i < digitStart; i++) {
-            char c = simpleName.charAt(i);
             if (c < 'a' || c > 'z') {
                 return false;
             }
         }
-        return true;
+        return hasDigit;
     }
 
     private static Method findArtistDaoInsertAllMethod(Class<?> daoClass)
